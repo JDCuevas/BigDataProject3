@@ -14,9 +14,11 @@ import keras.preprocessing.text as kpt
 from keras.preprocessing.text import Tokenizer
 from argparse import ArgumentParser
 
+import os
+cwd = os.getcwd()
 
 if __name__ == '__main__':
-    parser = ArgumentParser(description = "Capsule network on protein volumetric data.")
+    parser = ArgumentParser(description = "Logistic Regression and CNN for Tweet classification.")
     parser.add_argument('--model', default = 'TWEETNET')
 
     args = parser.parse_args()
@@ -25,7 +27,7 @@ if __name__ == '__main__':
     #=================================================================
 
     # Extract data from a csv
-    training = np.genfromtxt('/home/julian_cuevas1/data/training/cleantextlabels7.csv', delimiter=',', usecols=(0, 1), dtype=None)
+    training = np.genfromtxt(cwd + '/training/cleantextlabels7.csv', delimiter=',', usecols=(0, 1), dtype=None)
 
     # create our training data from the tweets
     train_x = [x[0] for x in training]
@@ -92,7 +94,7 @@ if __name__ == '__main__':
     #================================================================
 
     model_json = model.to_json()
-    with open('/home/julian_cuevas1/tweetnet/models/model_' + args.model + '.json', 'w') as json_file:
+    with open(cwd + '/models/model_' + args.model + '.json', 'w') as json_file:
         json_file.write(model_json)
 
-    model.save_weights('/home/julian_cuevas1/tweetnet/models/model_' + args.model + '.h5')
+    model.save_weights(cwd + '/models/model_' + args.model + '.h5')

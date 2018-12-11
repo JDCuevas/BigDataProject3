@@ -1,7 +1,7 @@
 # BigDataProject3
 A CNN and a Logistic Regression model for classifying tweets as talking about medical condition: No [0], Yes[1], Ambiguous [2]
 
-Instructions:
+# Instructions:
   To train the networks (optional):
       python train_network.py --model TWEETNET
       python train_network.py --model TWEETCONV
@@ -12,6 +12,6 @@ Instructions:
       
 Results can be found in the 'results' folder in the main directory. 
 
-Network Validation Acc:
+# Network Validation Acc
   TWEETNET: ~75%
   TWEETCONV: ~76%

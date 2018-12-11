@@ -4,15 +4,10 @@ import keras
 import keras.preprocessing.text as kpt
 from keras.preprocessing.text import Tokenizer
 from keras.models import model_from_json
+from argparse import ArgumentParser
+import os
 
-# we're still going to use a Tokenizer here, but we don't need to fit it
-tokenizer = Tokenizer(num_words=1000)
-# for human-friendly printing
-labels = ['No', 'Yes', 'Ambiguous']
-
-# read in our saved dictionary
-with open('dictionary.json', 'r') as dictionary_file:
-    dictionary = json.load(dictionary_file)
+cwd = os.getcwd()
 
 # this utility makes sure that all the words in your input
 # are registered in the dictionary
@@ -27,28 +22,69 @@ def convert_text_to_index_array(text):
             print("'%s' not in training corpus; ignoring." %(word))
     return wordIndices
 
-#===================================================================
-#=========================== LOAD MODEL ============================
-#===================================================================
+if __name__ == '__main__':
+    parser = ArgumentParser(description = "CNN and Logistic Regresion for Tweet Analysis.")
+    parser.add_argument('--model', default = 'TWEETNET')
+    parser.add_argument('--max_words', default = 1000)
+    
+    args = parser.parse_args()
 
-# read in your saved model structure
-json_file = open('/home/julian_cuevas1/tweetnet/models/model.json', 'r')
-loaded_model_json = json_file.read()
-json_file.close()
-# and create a model from that
-model = model_from_json(loaded_model_json)
-# and weight your nodes with your saved values
-model.load_weights('/home/julian_cuevas1/tweetnet/models/model.h5')
+    # we're still going to use a Tokenizer here, but we don't need to fit it
+    tokenizer = Tokenizer(num_words=1000)
+    # for human-friendly printing
+    labels = ['No', 'Yes', 'Ambiguous']
+     
+    
+    # read in our saved dictionary
+    with open('dictionary.json', 'r') as dictionary_file:
+        dictionary = json.load(dictionary_file)    
 
-#====================================================================
-#============================ LOAD DATA =============================
-#====================================================================
+    #===================================================================
+    #=========================== LOAD MODEL ============================
+    #===================================================================
+    
+    # read in your saved model structure
+    json_file = open(cwd + '/models/model_' + args.model + '.json', 'r')
+    loaded_model_json = json_file.read()
+    json_file.close()
+    # and create a model from that
+    model = model_from_json(loaded_model_json)
+    # and weight your nodes with your saved values
+    model.load_weights(cwd + '/models/model_' + args.model + '.h5')
 
-# Extract data from a csv
-inputs = np.genfromtxt('/home/julian_cuevas1/data/gathered/keyword_tweets.csv', delimiter=',', usecols=(0), dtype=None)
+    #====================================================================
+    #============================ LOAD DATA =============================
+    #====================================================================
 
-tokenizer.fit_on_texts(inputs)
+    # Extract data from a csv
+    #test = np.genfromtxt('/home/julian_cuevas1/data/gathered/keyword_tweets.csv', delimiter=',', usecols=(0), dtype=None)
+    data = np.genfromtxt(cwd + '/data/gathered_keywords.csv', delimiter=',', usecols=(0), dtype=None)
+    inputs = [x[0] for x in data]
 
+    allWordIndices = []
+    #tokenizer.fit_on_texts(inputs)
+
+    # for each tweet, change each token to its ID in the Tokenizer's word_index
+    for text in data:
+        wordIndices = convert_text_to_index_array(text)
+        allWordIndices.append(wordIndices)
+    
+    allWordIndices = np.asarray(allWordIndices)
+    inputs = tokenizer.sequences_to_matrix(allWordIndices, mode='binary')
+
+    if args.model == 'TWEETCONV':    
+        inputs = np.expand_dims(inputs, axis=2)
+    
+    results = model.predict(inputs)
+    
+    results = np.apply_along_axis(np.argmax, axis=1, arr=results)
+    results = np.expand_dims(results, axis=1)
+    
+    data = np.expand_dims(data, axis=1)
+
+    results = np.hstack((data, results))
+
+    np.savetxt(cwd + "/results/results_" + args.model + ".csv", results, delimiter=",", fmt='%s')
 
 '''
 # okay here's the interactive part
